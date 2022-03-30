@@ -1,0 +1,13 @@
+{
+  "name": "rhacs-docs-site-generator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/stackrox/docs-tools.git",
+  "author": "Red Hat, Inc.",
+  "license": "MIT",
+  "devDependencies": {
+    "@antora/cli": "^2.3.4",
+    "@antora/site-generator-default": "^2.3.4",
+    "antora-site-generator-lunr": "^0.6.1"
+  }
+}
