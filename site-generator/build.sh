@@ -30,8 +30,8 @@ mkdir -p "$OUTPUT_PATH"
 playbook_yml="${OUTPUT_PATH}/playbook.yml"
 cat >"$playbook_yml" <<EOF
 site:
-  title: RHACS documentation
-  start_page: rhacs::index.adoc
+  title: OCP documentation
+  start_page: ocp::index.adoc
 content:
   sources:
   - url: $CONTENT_REPO

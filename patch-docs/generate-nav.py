@@ -12,9 +12,9 @@ import sys
 records = yaml.safe_load_all(sys.stdin.read())
 
 root_config = {
-    'name': 'rhacs',
-    'title': 'Red Hat Advanced Cluster Security for Kubernetes',
-    'version': 'latest',
+    'name': 'ocp',
+    'title': 'Red Hat OpenShift Container Platform',
+    'version': '4.10',
     'start_page': 'ROOT:welcome/index.adoc',
     'nav': ['modules/ROOT/nav.adoc']
 }

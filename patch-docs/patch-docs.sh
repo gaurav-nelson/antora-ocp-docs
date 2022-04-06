@@ -25,8 +25,18 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 docs_copy_tmp="$(mktemp -d)"
 cp -a "${DOCS_PATH}"/* "$docs_copy_tmp/"
+
+info "Removing symlinks..."
 find "${docs_copy_tmp}" -type l -delete
 
+info "Removing empty directories..."
+find "${docs_copy_tmp}" -type d -empty -delete
+
+info "Copying _topic_map.yml..."
+cp "${docs_copy_tmp}/_topic_maps/_topic_map.yml" "${PATCHED_DOCS_PATH}/_topic_map.yml"
+
+info "Renaming _attributes"
+mv "${docs_copy_tmp}/_attributes" "${docs_copy_tmp}/attributes"
 
 cd "$PATCHED_DOCS_PATH" || die "Could not change directory"
 
@@ -40,6 +50,9 @@ while IFS='' read -r dir || [[ -n "$dir" ]]; do
   scripts)
     ;;
   modules)
+    target_dir=./docs/modules/ROOT/partials/
+    ;;
+  attributes)
     target_dir=./docs/modules/ROOT/partials/
     ;;
   images)
@@ -67,13 +80,13 @@ pip3 install -r "${SCRIPT_DIR}/requirements.txt"
 
 find . -name '*.adoc' -print0 | xargs -0 "${SCRIPT_DIR}/patch-files.py"
 
-"${SCRIPT_DIR}/generate-nav.py" <"${DOCS_PATH}/_topic_map.yml"
+"${SCRIPT_DIR}/generate-nav.py" <"${PATCHED_DOCS_PATH}/_topic_map.yml"
 
-git init
-git config user.name 'Docs Builder'
-git config user.email 'rhacs-eng+docsbot@redhat.com'
-git checkout -b "main"
-git add -A .
-git commit -am "Initial import"
+# git init
+# git config user.name 'Docs Builder'
+# git config user.email 'rhacs-eng+docsbot@redhat.com'
+# git checkout -b "main"
+# git add -A .
+# git commit -am "Initial import"
 
 info "Wrote docs to $PATCHED_DOCS_PATH"
