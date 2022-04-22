@@ -9,7 +9,9 @@ Run the transformation script:
 ```
 
 To do:
-1. Use the `patch-files` script to patch xrefs in the generated files.
-2. Use the `generate-nav` script to generate the navigation.
-3. Use an Antora UI bundle to generate the site.
-4. Add indexing and search capabilities.
+1. ~~Use the `patch-files` script to patch xrefs in the generated files.~~
+1. ~~Use the `generate-nav` script to generate the navigation.~~
+1. Add `product-title` and `product-version` variables in the common attributes
+file.
+1. Use an Antora playbook yml with the default UI bundle to generate the site.
+1. Add indexing and search capabilities.

@@ -20,6 +20,7 @@ def patch_file(filepath):
         contents = f.read()
     contents = contents.replace('include::modules/', 'include::ROOT:partial$')
     contents = contents.replace('include::_attributes/', 'include::ROOT:partial$')
+    contents = contents.replace('include::snippets/', 'include::ROOT:partial$')
 
     dirpath = os.path.dirname(filepath) + '/'
     pages_idx = dirpath.find('/ROOT/pages/')

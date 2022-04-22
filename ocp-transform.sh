@@ -2,7 +2,7 @@
 
 set -e
 
-usage() { echo "Usage: $0 [-d <output directory>] [-b <branch>]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-d <output directory>] [-b <BRANCH>]" 1>&2; exit 1; }
 
 info() {
   echo >&1 "$@"
@@ -17,14 +17,14 @@ die() {
   exit 1
 }
 
-while getopts ":d:b:" flag;
+while getopts ":d:b:" FLAG;
 do
-    case "${flag}" in
+    case "${FLAG}" in
         d)
-          output_dir=${OPTARG}
+          OUTPUT_DIR=${OPTARG}
           ;;
         b)
-          branch=${OPTARG}
+          BRANCH=${OPTARG}
           ;;
         *)
           usage
@@ -32,26 +32,28 @@ do
     esac
 done
 
-if [[ -z "$output_dir" || -z "$branch" ]]; then
+if [[ -z "$OUTPUT_DIR" || -z "$BRANCH" ]]; then
   usage
 fi
 
-fullpath_patched_docs="$(realpath "$output_dir")"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-highlight "Branch: $branch";
+FULLPATH_PATCHED_DOCS="$(realpath "$OUTPUT_DIR")"
 
-mkdir -p "$output_dir" || die "Output directory $output_dir could not be created"
-highlight "Patch docs path: $fullpath_patched_docs"
+highlight "Branch: $BRANCH";
+
+mkdir -p "$OUTPUT_DIR" || die "Output directory $OUTPUT_DIR could not be created"
+highlight "Patch docs path: $FULLPATH_PATCHED_DOCS"
 
 info "Creating temp directory..."
-temp_docs_dir="$(mktemp -d)"
+TEMP_DOCS_DIR="$(mktemp -d)"
 
-highlight "Temp docs directory: $temp_docs_dir"
+highlight "Temp docs directory: $TEMP_DOCS_DIR"
 info "switching to patched docs dir..."
-cd "$temp_docs_dir"
+cd "$TEMP_DOCS_DIR"
 
 info "Cloning openshift-docs repo..."
-git clone --depth 1 --branch "$branch" git@github.com:openshift/openshift-docs.git
+git clone --depth 1 --branch "$BRANCH" git@github.com:openshift/openshift-docs.git
 
 info "Switching to openshift-docs repo..."
 cd openshift-docs
@@ -65,37 +67,64 @@ find . -type l -delete
 info "Removing empty directories..."
 find . -type d -empty -delete
 
-cd "$fullpath_patched_docs" || die "Could not change directory"
+cd "$FULLPATH_PATCHED_DOCS" || die "Could not change directory"
 
-find "$temp_docs_dir/openshift-docs" -type d -mindepth 1 -maxdepth 1 | while IFS='' read -r dir || [[ -n "$dir" ]]; do
+find "$TEMP_DOCS_DIR/openshift-docs" -type d -mindepth 1 -maxdepth 1 | while IFS='' read -r dir || [[ -n "$dir" ]]; do
   name="$(basename "$dir")"
   if [[ "$name" =~ ^[._] ]]; then
+    if [[ "$name" =~ '_attributes' ]]; then
+      TARGET_DIR=./docs/modules/ROOT/partials/
+      [[ -n "$TARGET_DIR" ]] || continue
+      info "Copying $dir/* to $TARGET_DIR ..."
+      mkdir -p "$TARGET_DIR"
+      cp -rf "$dir"/* "$TARGET_DIR"
+    fi
     continue
   fi
-  target_dir=""
+  TARGET_DIR=""
   case "$name" in
   scripts)
     ;;
   modules)
-    target_dir=./docs/modules/ROOT/partials/
+    TARGET_DIR=./docs/modules/ROOT/partials/
+    ;;
+  snippets)
+    TARGET_DIR=./docs/modules/ROOT/partials/
     ;;
   images)
-    target_dir=./docs/modules/ROOT/images/
+    TARGET_DIR=./docs/modules/ROOT/images/
     ;;
   files)
-    target_dir=./docs/modules/ROOT/_files/
+    TARGET_DIR=./docs/modules/ROOT/_files/
     ;;
   *)
-    target_dir="./docs/modules/ROOT/pages/${name}/"
+    TARGET_DIR="./docs/modules/ROOT/pages/${name}/"
     ;;
   esac
-  [[ -n "$target_dir" ]] || continue
-  info "Copying $dir/* to $target_dir ..."
-  mkdir -p "$target_dir"
-  cp -rf "$dir"/* "$target_dir"
+  [[ -n "$TARGET_DIR" ]] || continue
+  info "Copying $dir/* to $TARGET_DIR ..."
+  mkdir -p "$TARGET_DIR"
+  cp -rf "$dir"/* "$TARGET_DIR"
 done
 
+python3 -m venv "${SCRIPT_DIR}/.venv"
+. "${SCRIPT_DIR}/.venv/bin/activate"
+pip3 install --upgrade pip setuptools
+pip3 install -r "${SCRIPT_DIR}/requirements.txt"
+
+highlight "Fixing xrefs..."
+
+find . -name '*.adoc' -print0 | xargs -0 "${SCRIPT_DIR}/patch-files.py"
+
+highlight "Generating table of contents..."
+
+"${SCRIPT_DIR}/generate-nav.py" <"$TEMP_DOCS_DIR/openshift-docs/_topic_maps/_topic_map.yml"
+
+# highlight "Setting product title and version..."
+# echo ":product-title: OpenShift Container Platform" >> '$FULLPATH_PATCHED_DOCS/docs/modules/ROOT/partials/common-attributes.adoc'
+# echo ":product-version: ${BRANCH: -4}" >> "$FULLPATH_PATCHED_DOCS/docs/modules/ROOT/partials/common-attributes.adoc"
+
 info "Deleting temp directory..."
-rm -rf "$temp_docs_dir"
+rm -rf "$TEMP_DOCS_DIR"
 
 highlight "✓ COMPLETE"
