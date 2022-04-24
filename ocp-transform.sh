@@ -120,9 +120,31 @@ highlight "Generating table of contents..."
 
 "${SCRIPT_DIR}/generate-nav.py" <"$TEMP_DOCS_DIR/openshift-docs/_topic_maps/_topic_map.yml"
 
-# highlight "Setting product title and version..."
-# echo ":product-title: OpenShift Container Platform" >> '$FULLPATH_PATCHED_DOCS/docs/modules/ROOT/partials/common-attributes.adoc'
-# echo ":product-version: ${BRANCH: -4}" >> "$FULLPATH_PATCHED_DOCS/docs/modules/ROOT/partials/common-attributes.adoc"
+highlight "Setting product title and version..."
+
+search_dir=$TEMP_DOCS_DIR/openshift-docs/_attributes
+for entry in "$search_dir"/*
+do
+  filename=$(basename "$entry")
+  echo ":product-title: OpenShift Container Platform" >> $FULLPATH_PATCHED_DOCS/docs/modules/ROOT/partials/$filename
+  echo ":product-version: ${BRANCH: -4}" >> $FULLPATH_PATCHED_DOCS/docs/modules/ROOT/partials/$filename
+done
+
+highlight "Generating playbook..."
+playbook_yml="${FULLPATH_PATCHED_DOCS}/playbook.yml"
+cat >"$playbook_yml" <<EOF
+site:
+  title: OCP documentation
+  start_page: container-platform::index.adoc
+content:
+  sources:
+  - url: .
+    branches: main
+    start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+EOF
 
 info "Deleting temp directory..."
 rm -rf "$TEMP_DOCS_DIR"

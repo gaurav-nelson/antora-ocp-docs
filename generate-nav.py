@@ -12,7 +12,7 @@ import sys
 records = yaml.safe_load_all(sys.stdin.read())
 
 root_config = {
-    'name': 'ocp',
+    'name': 'container-platform',
     'title': 'Red Hat OpenShift Container Platform',
     'version': '4.10',
     'start_page': 'ROOT:welcome/index.adoc',
